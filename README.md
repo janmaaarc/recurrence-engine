@@ -3,11 +3,47 @@
 `get_occurrences(rule, window_start, window_end)` expands a `RecurrenceRule`
 into concrete date occurrences inside a window (inclusive both ends).
 
-## Run tests
+Supports one-off, daily (every N days), weekly (set weekdays), and monthly
+(day-of-month) patterns, with never / end-date / after-K-occurrences end
+conditions.
+
+## Requirements
+
+Python 3.9+, standard library only. No dependencies.
+
+## Usage
+
+```python
+from datetime import date
+from recurrence import RecurrenceRule, Pattern, EndType, get_occurrences
+
+# "the 31st of each month, 3 times" clamps in short months
+rule = RecurrenceRule(
+    start_date=date(2026, 1, 31),
+    pattern=Pattern.MONTHLY,
+    end_type=EndType.COUNT,
+    day_of_month=31,
+    count=3,
+)
+get_occurrences(rule, date(2026, 1, 1), date(2026, 12, 31))
+# [date(2026, 1, 31), date(2026, 2, 28), date(2026, 3, 31)]
+```
+
+## Tests
 
 ```
 python3 -m unittest test_recurrence -v
 ```
+
+28 tests covering the areas that matter most:
+
+- **Month-end clamping** in leap and non-leap February.
+- **Exact termination**: `count` and `end_date` both verified per pattern,
+  including that `count` caps the sequence even when the window holds more.
+- **Start date that doesn't match the pattern** (weekly and monthly).
+- **Window inclusivity and dedup**.
+- **Input validation**: rejects `datetime` (a `date` subclass), out-of-range
+  weekday and day-of-month, non-positive `count` and `interval`.
 
 ## Design decisions (see recurrence.py docstring for detail)
 
@@ -20,6 +56,17 @@ python3 -m unittest test_recurrence -v
 - **End conditions (`count` / `end_date`):** evaluated against the full
   sequence from start_date, not against the window, so they stay exact
   regardless of what window you query.
+
+## Limitations (where it could break)
+
+- **Naive dates only.** No time-of-day, timezone, or DST handling. Once
+  occurrences carry a clock time, "9am daily" will drift across a DST
+  transition unless times are materialized per the timezone plan below.
+- **Weekly generation is O(days in window).** It scans day by day, which is
+  fine for normal windows but slow for very large ones (decades). Jumping
+  straight to the next matching weekday would fix it.
+- **No "Nth weekday of month" pattern yet** (the "2nd Tuesday" case). The
+  extension plan is documented below but not implemented.
 
 ## Extending to "2nd Tuesday of each month" and timezones/DST
 
