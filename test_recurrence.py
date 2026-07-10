@@ -63,6 +63,22 @@ class TestWeekly(unittest.TestCase):
         got = get_occurrences(rule, date(2026, 1, 1), date(2026, 12, 31))
         self.assertEqual(got, [date(2026, 1, 5), date(2026, 1, 12), date(2026, 1, 19), date(2026, 1, 26)])
 
+    def test_interval_skips_weeks(self):
+        # Mondays, every 2 weeks -> alternating Mondays only.
+        rule = RecurrenceRule(date(2026, 1, 5), Pattern.WEEKLY, EndType.NEVER, interval=2, weekdays={0})
+        got = get_occurrences(rule, date(2026, 1, 1), date(2026, 3, 1))
+        self.assertEqual(got, [date(2026, 1, 5), date(2026, 1, 19), date(2026, 2, 2), date(2026, 2, 16)])
+
+    def test_weekly_interval_below_one_rejected(self):
+        with self.assertRaises(ValueError):
+            RecurrenceRule(date(2026, 1, 1), Pattern.WEEKLY, EndType.NEVER, interval=0, weekdays={0})
+
+    def test_interval_with_multiple_weekdays(self):
+        # Mon+Thu, every 2 weeks -> both weekdays fire together, skip alternating weeks.
+        rule = RecurrenceRule(date(2026, 1, 5), Pattern.WEEKLY, EndType.NEVER, interval=2, weekdays={0, 3})
+        got = get_occurrences(rule, date(2026, 1, 1), date(2026, 1, 25))
+        self.assertEqual(got, [date(2026, 1, 5), date(2026, 1, 8), date(2026, 1, 19), date(2026, 1, 22)])
+
 
 class TestMonthly(unittest.TestCase):
     def test_month_end_clamps_in_non_leap_february(self):

@@ -58,7 +58,7 @@ class RecurrenceRule:
     start_date: date
     pattern: Pattern
     end_type: EndType
-    interval: int = 1                      # DAILY: every `interval` days
+    interval: int = 1                      # DAILY/WEEKLY: every `interval` days/weeks
     weekdays: Optional[Set[int]] = None    # WEEKLY: 0=Mon .. 6=Sun
     day_of_month: Optional[int] = None     # MONTHLY: 1..31, clamped to month length
     end_date: Optional[date] = None        # required if end_type == END_DATE
@@ -68,8 +68,8 @@ class RecurrenceRule:
         _require_plain_date(self.start_date, "start_date")
         if self.end_date is not None:
             _require_plain_date(self.end_date, "end_date")
-        if self.pattern == Pattern.DAILY and self.interval < 1:
-            raise ValueError("daily pattern requires interval >= 1")
+        if self.pattern in (Pattern.DAILY, Pattern.WEEKLY) and self.interval < 1:
+            raise ValueError("interval must be >= 1")
         if self.pattern == Pattern.WEEKLY:
             if not self.weekdays:
                 raise ValueError("weekly pattern requires a non-empty weekdays set")
@@ -109,8 +109,10 @@ def _raw_occurrences(rule: RecurrenceRule) -> Iterator[date]:
 
     elif rule.pattern == Pattern.WEEKLY:
         current = rule.start_date
+        anchor = rule.start_date - timedelta(days=rule.start_date.weekday())  # start of the week containing start_date
         while True:
-            if current.weekday() in rule.weekdays:
+            week_index = (current - anchor).days // 7
+            if week_index % rule.interval == 0 and current.weekday() in rule.weekdays:
                 yield current
             current += timedelta(days=1)
 

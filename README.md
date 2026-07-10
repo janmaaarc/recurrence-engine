@@ -3,9 +3,9 @@
 `get_occurrences(rule, window_start, window_end)` expands a `RecurrenceRule`
 into concrete date occurrences inside a window (inclusive both ends).
 
-Supports one-off, daily (every N days), weekly (set weekdays), and monthly
-(day-of-month) patterns, with never / end-date / after-K-occurrences end
-conditions.
+Supports one-off, daily (every N days), weekly (set weekdays, every N weeks),
+and monthly (day-of-month) patterns, with never / end-date / after-K-occurrences
+end conditions.
 
 ## Requirements
 
@@ -35,7 +35,7 @@ get_occurrences(rule, date(2026, 1, 1), date(2026, 12, 31))
 python3 -m unittest test_recurrence -v
 ```
 
-28 tests covering the areas that matter most:
+31 tests covering the areas that matter most:
 
 - **Month-end clamping** in leap and non-leap February.
 - **Exact termination**: `count` and `end_date` both verified per pattern,
