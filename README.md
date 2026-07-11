@@ -27,6 +27,17 @@ rule = RecurrenceRule(
 )
 get_occurrences(rule, date(2026, 1, 1), date(2026, 12, 31))
 # [date(2026, 1, 31), date(2026, 2, 28), date(2026, 3, 31)]
+
+# "every other Monday, starting Jan 5"
+rule = RecurrenceRule(
+    start_date=date(2026, 1, 5),
+    pattern=Pattern.WEEKLY,
+    end_type=EndType.NEVER,
+    weekdays={0},
+    interval=2,
+)
+get_occurrences(rule, date(2026, 1, 1), date(2026, 3, 1))
+# [date(2026, 1, 5), date(2026, 1, 19), date(2026, 2, 2), date(2026, 2, 16)]
 ```
 
 ## Tests
